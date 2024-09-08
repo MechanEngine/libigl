@@ -1,4 +1,4 @@
-if(TARGET glfw::glfw)
+if(TARGET glfw)
     return()
 endif()
 

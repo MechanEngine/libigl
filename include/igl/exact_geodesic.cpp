@@ -3237,6 +3237,143 @@ IGL_INLINE void igl::exact_geodesic(
   }
 }
 
+template <typename DerivedV, typename DerivedF>
+Eigen::MatrixX3d igl::exact_geodesic_path(const Eigen::MatrixBase<DerivedV>& V, const Eigen::MatrixBase<DerivedF>& F, const int& VS, const int& VT)
+{
+	assert((V.cols() == 3 || V.cols() == 2) && F.cols() == 3 && "Only support 2D/3D triangle mesh");
+	std::vector<typename DerivedV::Scalar> points(V.rows() * 3);
+	std::vector<typename DerivedF::Scalar> faces(F.rows() * F.cols());
+	for (int i = 0; i < points.size(); i++)
+	{
+		// Append 0s for 2D input
+		points[i] = ((i%3)<2 || V.cols()==3) ? V(i / 3, i % 3) : 0.0;
+	}
+	for (int i = 0; i < faces.size(); i++)
+	{
+		faces[i] = F(i / 3, i % 3);
+	}
+
+	igl::geodesic::Mesh mesh;
+	mesh.initialize_mesh_data(points, faces);
+	igl::geodesic::GeodesicAlgorithmExact exact_algorithm(&mesh);
+
+	std::vector<igl::geodesic::SurfacePoint> source;
+	source.emplace_back(&mesh.faces()[VS]);
+
+	std::vector<igl::geodesic::SurfacePoint> target;
+	target.emplace_back(&mesh.faces()[VT]);
+
+
+	exact_algorithm.propagate(source);
+	std::vector<igl::geodesic::SurfacePoint> path;
+
+	exact_algorithm.trace_back(target[0], path);
+
+	Eigen::MatrixX3d Path(path.size(), 3);
+	for (int i = 0; i < path.size(); i++)
+	{
+		Path(i, 0) = path[i].x();
+		Path(i, 1) = path[i].y();
+		Path(i, 2) = path[i].z();
+	}
+	return Path;
+}
+
+template <typename DerivedV, typename DerivedF>
+IGL_INLINE Eigen::VectorXi igl::exact_geodesic_path_tri(
+  const Eigen::MatrixBase<DerivedV> &V,
+  const Eigen::MatrixBase<DerivedF> &F,
+  const int &TriSt,
+  const int &TriDes
+  )
+{
+	assert((V.cols() == 3 || V.cols() == 2) && F.cols() == 3 && "Only support 2D/3D triangle mesh");
+	std::vector<typename DerivedV::Scalar> points(V.rows() * 3);
+	std::vector<typename DerivedF::Scalar> faces(F.rows() * F.cols());
+	for (int i = 0; i < points.size(); i++)
+	{
+		// Append 0s for 2D input
+		points[i] = ((i%3)<2 || V.cols()==3) ? V(i / 3, i % 3) : 0.0;
+	}
+	for (int i = 0; i < faces.size(); i++)
+	{
+		faces[i] = F(i / 3, i % 3);
+	}
+
+	igl::geodesic::Mesh mesh;
+	mesh.initialize_mesh_data(points, faces);
+	igl::geodesic::GeodesicAlgorithmExact exact_algorithm(&mesh);
+
+	std::vector<igl::geodesic::SurfacePoint> source;
+	source.emplace_back(&mesh.faces()[TriSt]);
+
+	std::vector<igl::geodesic::SurfacePoint> target;
+	target.emplace_back(&mesh.faces()[TriDes]);
+
+
+	exact_algorithm.propagate(source);
+	std::vector<igl::geodesic::SurfacePoint> path;
+
+	exact_algorithm.trace_back(target[0], path);
+
+	Eigen::VectorXi Path(path.size());
+	for (int i = 0; i < path.size(); i++)
+	{
+		Path[i] = int(reinterpret_cast<igl::geodesic::face_pointer>(path[i].base_element()) - &mesh.faces()[0]);
+	}
+	return Path;
+}
+
+template <typename DerivedV, typename DerivedF, typename DerivedVS, typename DerivedVT>
+std::vector<Eigen::Vector3d> igl::exact_geodesic_path(const Eigen::MatrixBase<DerivedV>& V, const Eigen::MatrixBase<DerivedF>& F, const Eigen::MatrixBase<DerivedVS>& VS, const Eigen::MatrixBase<DerivedVT>& VT, const int& VSIndex, const int& VTIndex)
+{
+	assert((V.cols() == 3 || V.cols() == 2) && F.cols() == 3 && "Only support 2D/3D triangle mesh");
+	std::vector<typename DerivedV::Scalar> points(V.rows() * 3);
+	std::vector<typename DerivedF::Scalar> faces(F.rows() * F.cols());
+	for (int i = 0; i < points.size(); i++)
+	{
+		// Append 0s for 2D input
+		points[i] = ((i%3)<2 || V.cols()==3) ? V(i / 3, i % 3) : 0.0;
+	}
+	for (int i = 0; i < faces.size(); i++)
+	{
+		faces[i] = F(i / 3, i % 3);
+	}
+
+	igl::geodesic::Mesh mesh;
+	mesh.initialize_mesh_data(points, faces);
+	igl::geodesic::GeodesicAlgorithmExact exact_algorithm(&mesh);
+
+	std::vector<igl::geodesic::SurfacePoint> source;
+	source.emplace_back(&mesh.faces()[VSIndex]);
+	source.back().x() = VS(0);
+	source.back().y() = VS(1);
+	source.back().z() = VS(2);
+
+	std::vector<igl::geodesic::SurfacePoint> target;
+	target.emplace_back(&mesh.faces()[VTIndex]);
+	target.back().x() = VT(0);
+	target.back().y() = VT(1);
+	target.back().z() = VT(2);
+
+	exact_algorithm.propagate(source);
+	std::vector<igl::geodesic::SurfacePoint> path;
+
+	exact_algorithm.trace_back(target[0], path);
+
+	std::vector<Eigen::Vector3d> Path(path.size());
+	for (int i = 0; i < path.size(); i++)
+	{
+		Path[i].x() = path[i].x();
+		Path[i].y() = path[i].y();
+		Path[i].z() = path[i].z();
+	}
+	// reverse the path
+	std::ranges::reverse(Path);
+	return Path;
+}
+
+
 #ifdef IGL_STATIC_LIBRARY
 template void igl::exact_geodesic<Eigen::Matrix<double, -1, -1, 0, -1, -1>, Eigen::Matrix<int, -1, -1, 0, -1, -1>, Eigen::Matrix<int, -1, 1, 0, -1, 1>, Eigen::Matrix<int, -1, 1, 0, -1, 1>, Eigen::Matrix<int, -1, 1, 0, -1, 1>, Eigen::Matrix<int, -1, 1, 0, -1, 1>, Eigen::Matrix<double, -1, 1, 0, -1, 1>>(Eigen::MatrixBase<Eigen::Matrix<double, -1, -1, 0, -1, -1>> const &, Eigen::MatrixBase<Eigen::Matrix<int, -1, -1, 0, -1, -1>> const &, Eigen::MatrixBase<Eigen::Matrix<int, -1, 1, 0, -1, 1>> const &, Eigen::MatrixBase<Eigen::Matrix<int, -1, 1, 0, -1, 1>> const &, Eigen::MatrixBase<Eigen::Matrix<int, -1, 1, 0, -1, 1>> const &, Eigen::MatrixBase<Eigen::Matrix<int, -1, 1, 0, -1, 1>> const &, Eigen::PlainObjectBase<Eigen::Matrix<double, -1, 1, 0, -1, 1>> &);
 #endif

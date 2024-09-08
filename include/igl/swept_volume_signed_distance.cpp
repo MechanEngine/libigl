@@ -50,44 +50,53 @@ IGL_INLINE void igl::swept_volume_signed_distance(
     V,F,PER_EDGE_NORMALS_WEIGHTING_TYPE_UNIFORM,FN,EN,E,EMAP);
   AABB<MatrixXd,3> tree;
   tree.init(V,F);
+
+	igl::FastWindingNumberBVH fwn_bvh;
+	int order = 2;
+	igl::fast_winding_number(V,F,order,fwn_bvh);
+	igl::WindingNumberAABB<Eigen::RowVector3d,Eigen::MatrixXd,Eigen::MatrixXi> hier;
+	hier.set_mesh(V,F);
+	hier.grow();
+
   for(int ti = 0;ti<t.size();ti++)
   {
     const Affine3d At = transform(t(ti));
-    for(int g = 0;g<GV.rows();g++)
-    {
-      // Don't bother finding out how deep inside points are.
-      if(finite_iso && S(g)==S(g) && S(g)<isolevel-sqrt(3.0)*h)
-      {
-        continue;
-      }
-      const RowVector3d gv = 
-        (GV.row(g) - At.translation().transpose())*At.linear();
-      // If outside of extended box, then consider it "far away enough"
-      if(finite_iso && !box.contains(gv.transpose()))
-      {
-        continue;
-      }
-      RowVector3d c,n;
-      int i;
-      double sqrd,s;
-      //signed_distance_pseudonormal(tree,V,F,FN,VN,EN,EMAP,gv,s,sqrd,i,c,n);
-      const double min_sqrd = 
-        finite_iso ? 
-        pow(sqrt(3.)*h+isolevel,2) : 
-        numeric_limits<double>::infinity();
-      sqrd = tree.squared_distance(V,F,gv,min_sqrd,i,c);
-      if(sqrd<min_sqrd)
-      {
-        pseudonormal_test(V,F,FN,VN,EN,EMAP,gv,i,c,s,n);
-        if(S(g) == S(g))
-        {
-          S(g) = std::min(S(g),s*sqrt(sqrd));
-        }else
-        {
-          S(g) = s*sqrt(sqrd);
-        }
-      }
-    }
+  	igl::parallel_for(GV.rows(),
+  		[&](const int g) {
+  			// Don't bother finding out how deep inside points are.
+			if(finite_iso && S(g)==S(g) && S(g)<isolevel-sqrt(3.0)*h)
+			{
+			  return;
+			}
+			const RowVector3d gv =
+			  (GV.row(g) - At.translation().transpose())*At.linear();
+			// If outside of extended box, then consider it "far away enough"
+			if(finite_iso && !box.contains(gv.transpose()))
+			{
+			  return;
+			}
+			RowVector3d c,n;
+			int i;
+			double sqrd,s;
+			//signed_distance_pseudonormal(tree,V,F,FN,VN,EN,EMAP,gv,s,sqrd,i,c,n);
+			const double min_sqrd =
+			  finite_iso ?
+			  pow(sqrt(3.)*h+isolevel,2) :
+			  numeric_limits<double>::infinity();
+			sqrd = tree.squared_distance(V,F,gv,min_sqrd,i,c);
+			if(sqrd<min_sqrd)
+			{
+				double w = fast_winding_number(fwn_bvh, 2, gv.template cast<float>());
+				s = 1.-2.*std::abs(w);
+			  if(S(g) == S(g))
+			  {
+				S(g) = std::min(S(g),s*sqrt(sqrd));
+			  }else
+			  {
+				S(g) = s*sqrt(sqrd);
+			  }
+			}
+  	});
   }
 
   if(finite_iso)

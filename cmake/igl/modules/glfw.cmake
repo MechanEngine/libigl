@@ -19,7 +19,7 @@ igl_include(opengl)
 target_link_libraries(igl_glfw ${IGL_SCOPE}
     igl::core
     igl::opengl
-    glfw::glfw
+    glfw
 )
 
 # 5. Unit tests

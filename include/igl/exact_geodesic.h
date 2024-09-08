@@ -43,7 +43,48 @@ namespace igl
       const Eigen::MatrixBase<DerivedVT> &VT,
       const Eigen::MatrixBase<DerivedFT> &FT,
       Eigen::PlainObjectBase<DerivedD> &D);
-}
+
+
+
+
+	template <
+	typename DerivedV,
+	typename DerivedF>
+	IGL_INLINE Eigen::MatrixX3d exact_geodesic_path(
+	  const Eigen::MatrixBase<DerivedV> &V,
+	  const Eigen::MatrixBase<DerivedF> &F,
+	  const int &VS,
+	  const int &VT
+	  );
+
+
+	/**
+	 * Find the triangle path from source to target
+	 */
+	template <
+	typename DerivedV,
+	typename DerivedF>
+	IGL_INLINE Eigen::VectorXi exact_geodesic_path_tri(
+	  const Eigen::MatrixBase<DerivedV> &V,
+	  const Eigen::MatrixBase<DerivedF> &F,
+	  const int &TriSt,
+	  const int &TriDes
+	  );
+
+	template <
+	typename DerivedV,
+	typename DerivedF,
+	typename DerivedVS,
+   typename DerivedVT>
+	IGL_INLINE std::vector<Eigen::Vector3d> exact_geodesic_path(
+	  const Eigen::MatrixBase<DerivedV> &V,
+	  const Eigen::MatrixBase<DerivedF> &F,
+	  const Eigen::MatrixBase<DerivedVS> &VS,
+	  const Eigen::MatrixBase<DerivedVT> &VT,
+	  const int& VSIndex,
+	  const int& VTIndex
+	  );
+	}
 
 #ifndef IGL_STATIC_LIBRARY
 #  include "exact_geodesic.cpp"
