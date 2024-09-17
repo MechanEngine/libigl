@@ -94,7 +94,12 @@ IGL_INLINE void igl::barycentric_coordinates(
   VectorS d20 = (v2*v0).rowwise().sum();
   VectorS d21 = (v2*v1).rowwise().sum();
   VectorS denom = d00 * d11 - d01 * d01;
-  L.resize(P.rows(),3);
+  L.resize(P.rows(), 3);
+  if (denom.minCoeff() < 1e-10)
+  {
+  	L(0, 0) = 1.; L(0, 1) = 0.; L(0, 2) = 0.;
+  	return;
+  }
   L.col(1) = (d11 * d20 - d01 * d21) / denom;
   L.col(2) = (d00 * d21 - d01 * d20) / denom;
   L.col(0) = 1.0f -(L.col(1) + L.col(2)).array();
