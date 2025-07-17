@@ -8,8 +8,7 @@ cmake_policy(SET CMP0135 NEW)
 include(FetchContent)
 FetchContent_Declare(
     cgal
-    URL https://github.com/CGAL/cgal/releases/download/v5.6/CGAL-5.6-library.tar.xz
-    URL_MD5 793da2d1597f3a5c0e3524f73a0b4039
+    URL https://github.com/CGAL/cgal/releases/download/v6.0.1/CGAL-6.0.1-library.tar.xz
 )
 FetchContent_GetProperties(cgal)
 if(cgal_POPULATED)
@@ -30,19 +29,7 @@ function(cgal_import_target)
         set(${NAME}_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${NAME} CACHE PATH "")
     endmacro()
 
-    include(gmp)
-    include(mpfr)
     include(boost)
-
-    ignore_package(GMP 5.0.1)
-    set(GMP_INCLUDE_DIR ${gmp_INCLUDE_DIR})
-    set(GMP_LIBRARIES gmp::gmp)
-    set(GMPXX_INCLUDE_DIR ${GMP_INCLUDE_DIR})
-    set(GMPXX_LIBRARIES ${GMP_LIBRARIES})
-
-    ignore_package(MPFR 3.0.0)
-    set(MPFR_INCLUDE_DIR "")
-    set(MPFR_LIBRARIES mpfr::mpfr)
 
     ignore_package(Boost 1.81.0)
     set(Boost_INCLUDE_DIRS "")
