@@ -6,6 +6,8 @@ message(STATUS "Third-party: creating target 'CGAL::CGAL'")
 
 cmake_policy(SET CMP0135 NEW)
 include(FetchContent)
+set(CGAL_DISABLE_GMP TRUE CACHE BOOL "Disable GMP support in CGAL")
+
 FetchContent_Declare(
     cgal
     URL https://github.com/CGAL/cgal/releases/download/v6.0.1/CGAL-6.0.1-library.tar.xz
