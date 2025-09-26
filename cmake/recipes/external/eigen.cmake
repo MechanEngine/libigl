@@ -12,8 +12,9 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 FetchContent_GetProperties(eigen)
+set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 if(NOT eigen_POPULATED)
-    FetchContent_MakeAvailable(eigen)
+    FetchContent_Populate(eigen)
 endif()
 
 add_library(Eigen3_Eigen INTERFACE)
